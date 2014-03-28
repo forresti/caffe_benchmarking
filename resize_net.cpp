@@ -26,43 +26,47 @@ double read_timer(){
 }
 
 int main(int argc, char** argv) {
-  cudaSetDevice(0);
-  Caffe::set_mode(Caffe::CPU);
-  Caffe::set_phase(Caffe::TEST);
+    cudaSetDevice(0);
+    Caffe::set_mode(Caffe::CPU);
+    Caffe::set_phase(Caffe::TEST);
 
-  NetParameter net_param;
-  ReadProtoFromTextFile(argv[1],
-      &net_param);
-  Net<float> caffe_net(net_param);
+    NetParameter net_param;
+    ReadProtoFromTextFile(argv[1],
+            &net_param);
+    Net<float> caffe_net(net_param);
 
-  LOG(ERROR) << "Performing Forward";
-  caffe_net.Forward(vector<Blob<float>*>());
+    LOG(ERROR) << "Performing Forward";
+    caffe_net.Forward(vector<Blob<float>*>());
 
-  const vector<shared_ptr<Layer<float> > >& layers = caffe_net.layers();
-  vector<vector<Blob<float>*> >& bottom_vecs = caffe_net.bottom_vecs();
-  vector<vector<Blob<float>*> >& top_vecs = caffe_net.top_vecs();
+    const vector<shared_ptr<Layer<float> > >& layers = caffe_net.layers();
+    vector<vector<Blob<float>*> >& bottom_vecs = caffe_net.bottom_vecs();
+    vector<vector<Blob<float>*> >& top_vecs = caffe_net.top_vecs();
 
+    for (int i = 0; i < layers.size(); ++i) {
 
-  for (int i = 0; i < layers.size(); ++i) {
-    //TODO: skip data layer (I think the data layer doesn't have a valid 'bottom' vector)
-
-    const string& layername = layers[i]->layer_param().name();
-    layers[i]->Forward(bottom_vecs[i], &top_vecs[i]);
-
-    LOG(ERROR) << "layer name: " << layername;
-    //LOG(ERROR) << "    bottom: num=" << bottom_vecs[i][0]->num(); //segfault?
-
-    LOG(ERROR) << "    top: num=" << top_vecs[i][0]->num() << 
-                  " channels=" << top_vecs[i][0]->channels() << 
-                  " height=" << top_vecs[i][0]->height() <<
-                  " width=" << top_vecs[i][0]->width(); 
+    }
 
 
-//    LOG(ERROR) << sprintf("    bottom: num=%d, channels=%d, height=%d, width=%d", 
-//                          bottom_vecs[i][0]->num(), bottom_vecs[i][0]->channels(), 
-//                          bottom_vecs[i][0]->height(), bottom_vecs[i][0]->width());  
+    for (int i = 0; i < layers.size(); ++i) {
+        //TODO: skip data layer (I think the data layer doesn't have a valid 'bottom' vector)
 
-  }
+        const string& layername = layers[i]->layer_param().name();
+        layers[i]->Forward(bottom_vecs[i], &top_vecs[i]);
 
-  return 0;
+        LOG(ERROR) << "layer name: " << layername;
+        //LOG(ERROR) << "    bottom: num=" << bottom_vecs[i][0]->num(); //segfault?
+
+        LOG(ERROR) << "    top: num=" << top_vecs[i][0]->num() << 
+            " channels=" << top_vecs[i][0]->channels() << 
+            " height=" << top_vecs[i][0]->height() <<
+            " width=" << top_vecs[i][0]->width(); 
+
+
+        //    LOG(ERROR) << sprintf("    bottom: num=%d, channels=%d, height=%d, width=%d", 
+        //                          bottom_vecs[i][0]->num(), bottom_vecs[i][0]->channels(), 
+        //                          bottom_vecs[i][0]->height(), bottom_vecs[i][0]->width());  
+
+    }
+
+    return 0;
 }
