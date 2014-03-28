@@ -30,6 +30,17 @@ function alexnet_plus_one_desc()
     desc_13 = reshape(desc_13{1}, [13 13 256]); %227x227 -> 13x13    
     show_desc(desc_13, 2, '227x227 -> 13x13, conv5');
 
+
+    display('distance between desc_13 and top-left of desc_14:')
+    dist = distance_metric(desc_13, desc_14(1:13, 1:13, :)) 
+
+    display('distance between desc_13 and all zeros:')
+    dist = distance_metric(desc_13, zeros(size(desc_13))) 
+
+%blob1 and blob2 should be 3d matrices of the same size.
+function dist = distance_metric(blob1, blob2)
+    dist = sum(sum(sum(abs(blob1 - blob2))));
+
 function show_desc(desc, figID, titleName)
     figure(figID)
     colormap(gray)

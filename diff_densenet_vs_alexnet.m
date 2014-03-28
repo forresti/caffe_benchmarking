@@ -25,7 +25,9 @@ scaleIdx
 pyra
     figure(1)
     colormap(gray)
-    imagesc(sum(densenet_desc{1}, 3))
+    %imagesc(sum(densenet_desc{1}, 3))
+    imagesc(max(densenet_desc{1}, [], 3))
+    colorbar
     title('densenet')
     %imagesc(sum(pyra.feat{5}, 3)) %no need to transpose with DenseNet.
 
@@ -43,12 +45,17 @@ pyra
 
     figure(2)
     colormap(gray)
-    imagesc(sum(alexnet_desc{1}, 3)')
+    alexnet_desc_trans = permute(alexnet_desc{1}, [2 1 3]); %rotate 90 degrees (row to col major)
+    %imagesc(sum(alexnet_desc_trans, 3))
+    imagesc(max(alexnet_desc_trans, [], 3))
+    colorbar;
     title('alexnet')
 
     figure(3)
     imshow(img);
     title('original image')
+
+    sum(sum(sum(abs(alexnet_desc_trans - densenet_desc{1})))) %difference
 
     keyboard
 
