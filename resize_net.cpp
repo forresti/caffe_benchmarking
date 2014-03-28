@@ -25,16 +25,7 @@ double read_timer(){
     return (double)((start.tv_sec) + 1.0e-6 * (start.tv_usec)) * 1000; //in milliseconds
 }
 
-int main(int argc, char** argv) {
-    cudaSetDevice(0);
-    Caffe::set_mode(Caffe::CPU);
-    Caffe::set_phase(Caffe::TEST);
-
-    NetParameter net_param;
-    ReadProtoFromTextFile(argv[1],
-            &net_param);
-    Net<float> caffe_net(net_param);
-
+void print_layer_sizes(Net<float> &caffe_net){
     caffe_net.Forward(vector<Blob<float>*>());
     const vector<shared_ptr<Layer<float> > >& layers = caffe_net.layers();
     vector<vector<Blob<float>*> >& bottom_vecs = caffe_net.bottom_vecs();
@@ -58,6 +49,33 @@ int main(int argc, char** argv) {
                       " channels=" << top_vecs[i][0]->channels() << 
                       " height=" << top_vecs[i][0]->height() <<
                       " width=" << top_vecs[i][0]->width(); 
+    }
+}
+
+int main(int argc, char** argv) {
+    cudaSetDevice(0);
+    Caffe::set_mode(Caffe::CPU);
+    Caffe::set_phase(Caffe::TEST);
+
+    NetParameter net_param;
+    ReadProtoFromTextFile(argv[1],
+            &net_param);
+    #if 0
+    Net<float> caffe_net(net_param); //initialize net (and print most of the blob sizes too)
+    //print_layer_sizes(caffe_net); //default size from prototxt file.
+
+    //0: num, 1: channels, 2: height, 3: width
+    net_param.set_input_dim(2, 227); //height
+    net_param.set_input_dim(3, 227); //width
+    Net<float> caffe_net_resized(net_param); //initialize net (and print most of the blob sizes too)
+    //print_layer_sizes(caffe_net_resized); //updated sizes
+    #endif
+
+    //look for size where we go from conv5=13x13x256 to conv5=14x14x256.
+    for(int inputSz = 227; inputSz<300; inputSz++){
+        net_param.set_input_dim(2, inputSz); //height
+        net_param.set_input_dim(3, inputSz); //width
+        Net<float> caffe_net_resized(net_param); //initialize net (and print most of the blob sizes too)
     }
 
     return 0;
