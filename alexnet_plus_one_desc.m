@@ -14,9 +14,9 @@ function alexnet_plus_one_desc()
     model_def_file = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_input_243x243_output_conv5.prototxt'; 
     caffe('init', model_def_file, model_file);
     caffe('set_mode_gpu');
+    caffe('set_phase_test');
     img_243 = img(1:243, 1:243, :);
-    %img_243 = imresize(img_227, [243 243], 'bilinear');
-    desc_14 = caffe('forward', {img_243});
+    desc_14 = AlexNet_descriptor(img_243);
     desc_14 = reshape(desc_14{1}, [14 14 256]); %243x243 -> 14x14 
     show_desc(desc_14, 4, '243x243 -> 14x14, conv5');
 
@@ -24,16 +24,17 @@ function alexnet_plus_one_desc()
     model_def_file = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_output_conv5.prototxt';
     caffe('init', model_def_file, model_file);
     caffe('set_mode_gpu');
+    caffe('set_phase_test');
     img_227 = img(1:227, 1:227, :);
-    desc_13 = caffe('forward', {img_227});
+    desc_13 = AlexNet_descriptor(img_227);
     desc_13 = reshape(desc_13{1}, [13 13 256]); %227x227 -> 13x13    
     show_desc(desc_13, 2, '227x227 -> 13x13, conv5');
 
 function show_desc(desc, figID, titleName)
     figure(figID)
     colormap(gray)
-    %im = sum(abs(desc), 3)';
-    im = max(abs(desc), [], 3)';
+    im = sum(abs(desc), 3)';
+    %im = max(abs(desc), [], 3)';
     imagesc(im);
     %imagesc(log(im / max(im(:))))
     colorbar
