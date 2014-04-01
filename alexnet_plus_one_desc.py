@@ -25,6 +25,12 @@ def prepare_image(filename):
     #img -= IMAGENET_MEAN #don't do data centering for now.
     return img
 
+#get the dims of the output blob for the final layer, after initializing caffe.
+def get_last_blob_dims(caffenet):
+    layerName = caffenet.blobs.keys()[-1]
+    return np.shape(caffenet.blobs[layerName].data)
+
+
 #MODEL_FILE = '/media/big_disk/installers_old/caffe_lowMemConv/examples/imagenet/imagenet_deploy.prototxt'
 MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_output_conv5.prototxt'
 PRETRAINED = '/media/big_disk/installers_old/caffe_lowMemConv/examples/alexnet_train_iter_470000'
@@ -38,11 +44,8 @@ input_blob = input_blob[:, 0:227, 0:227] #crop
 input_blob = np.ascontiguousarray(input_blob)
 input_blob = np.expand_dims(input_blob, axis=0) #(3,227,227) -> (1,3,227,227)
 input_blob = input_blob.astype(np.float32)
-
-BATCH_SIZE=1 #create output blob for final layer (kinda silly)
-#NUM_OUTPUT=1000
-#output_blobs = [np.empty((BATCH_SIZE, NUM_OUTPUT, 1, 1), dtype=np.float32)] #fc8
-output_blobs = [np.empty((BATCH_SIZE, 256, 13, 13), dtype=np.float32)] #conv5
+output_blob_dims = get_last_blob_dims(caffenet)
+output_blobs = [np.empty((output_blob_dims), dtype=np.float32)] 
 caffenet.Forward([input_blob], output_blobs) 
 
 layerNames = caffenet.blobs.keys()
@@ -52,5 +55,5 @@ conv2_data = caffenet.blobs['conv2']
 
 #TODO: run with 227x227 input and 243x243 input, and save all layers. compare each layer.
 
-embed()
+#embed()
 
