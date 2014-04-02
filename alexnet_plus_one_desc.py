@@ -32,15 +32,16 @@ def get_last_blob_dims(caffenet):
     return np.shape(caffenet.blobs[layerName].data)
 
 def diff_layer(reference, experimental, layerName):
-    print 'layer: %s' %layerName
+    print '  layer: %s' %layerName
     dist_from_0 = dist = np.linalg.norm(experimental)
     print '    L2 distance of alexnetPlusOne from 0: %f' %dist_from_0
     dist = np.linalg.norm(reference - experimental) # L2 norm
-    print '    L2 distance of alexnetPlusOne from reference code: %f' %dist
+    print '    L2 distance of alexnetPlusOne from stock alexnet: %f' %dist
     return dist
 
 #MODEL_FILE = '/media/big_disk/installers_old/caffe_lowMemConv/examples/imagenet/imagenet_deploy.prototxt'
 MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_output_conv5.prototxt'
+#MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_noPad_output_conv5.prototxt'
 PRETRAINED = '/media/big_disk/installers_old/caffe_lowMemConv/examples/alexnet_train_iter_470000'
 IMAGE_FILE = '/media/big_disk/installers_old/caffe/voc-release5/cachedir/VOC2007/JPEGImages/000023.jpg'
 
@@ -60,6 +61,7 @@ caffenet_227x227_activations = caffenet.blobs
 
 # 243x243 (alexnet + 16 ... produces 14x14 instead of 13x13 conv5)
 MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_input_243x243_output_conv5.prototxt'
+#MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_noPad_input_243x243_output_conv5.prototxt'
 caffenet = create_caffenet(MODEL_FILE, PRETRAINED)
 input_blob = img[0:243, 0:243, :]
 input_blob = prepare_image(input_blob)
@@ -74,4 +76,5 @@ for k in caffenet_227x227_activations.keys():
     experimental = caffenet_243x243_activations[k].data
     experimental = experimental[:, :, 0:refshape[2], 0:refshape[3]] #top-left corner of experimental (larger) slice
     dist = diff_layer(reference, experimental, k)
-
+    #print '    alexnet shape: ' + ' '.join(map(str, reference.shape))
+    #print '    alexnetPlusOne shape: ' + ' '.join(map(str, experimental.shape))
