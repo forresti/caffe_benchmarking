@@ -40,16 +40,20 @@ def diff_layer(reference, experimental, layerName):
     return dist
 
 #MODEL_FILE = '/media/big_disk/installers_old/caffe_lowMemConv/examples/imagenet/imagenet_deploy.prototxt'
-MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_output_conv5.prototxt'
+#MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_output_conv5.prototxt'
 #MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_noPad_output_conv5.prototxt'
+MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_noPad_input_355x355_output_conv5.prototxt' #out: 13x13
 PRETRAINED = '/media/big_disk/installers_old/caffe_lowMemConv/examples/alexnet_train_iter_470000'
 IMAGE_FILE = '/media/big_disk/installers_old/caffe/voc-release5/cachedir/VOC2007/JPEGImages/000023.jpg'
 
+
 img = io.imread(IMAGE_FILE)
+img = transform.rescale(img, [2.0, 2.0]) #2x upsample, for bigger input sizes (e.g. 355x355)
 
 # 227x227 (default alexnet)
 caffenet = create_caffenet(MODEL_FILE, PRETRAINED)
-input_blob = img[0:227, 0:227, :]
+#input_blob = img[0:227, 0:227, :]
+input_blob = img[0:355, 0:355, :] #TODO: auto-detect data layer size
 input_blob = prepare_image(input_blob)
 output_blob_dims = get_last_blob_dims(caffenet)
 output_blobs = [np.empty((output_blob_dims), dtype=np.float32)] 
@@ -60,10 +64,12 @@ caffenet_227x227_activations = caffenet.blobs
 #print conv2_activations.data
 
 # 243x243 (alexnet + 16 ... produces 14x14 instead of 13x13 conv5)
-MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_input_243x243_output_conv5.prototxt'
+#MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_input_243x243_output_conv5.prototxt'
 #MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_noPad_input_243x243_output_conv5.prototxt'
+MODEL_FILE = '/media/big_disk/installers_old/caffe/examples/imagenet_deploy_batchsize1_noPad_input_371x371_output_conv5.prototxt' #out: 14x14
 caffenet = create_caffenet(MODEL_FILE, PRETRAINED)
-input_blob = img[0:243, 0:243, :]
+#input_blob = img[0:243, 0:243, :]
+input_blob = img[0:371, 0:371, :]
 input_blob = prepare_image(input_blob)
 output_blob_dims = get_last_blob_dims(caffenet)
 output_blobs = [np.empty((output_blob_dims), dtype=np.float32)] 

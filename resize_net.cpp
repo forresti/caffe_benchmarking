@@ -82,7 +82,9 @@ int main(int argc, char** argv) {
     // inputSz=247 -> conv5=15x15x256
 
     //look for size where we go from conv5=13x13x256 to conv5=14x14x256.
-    for(int inputSz = 210; inputSz<250; inputSz++){
+    //for(int inputSz = 210; inputSz<250; inputSz++)
+    for(int inputSz = 350; inputSz<400; inputSz++)
+    {
         net_param.set_input_dim(2, inputSz); //height
         net_param.set_input_dim(3, inputSz); //width
         Net<float> caffe_net_resized(net_param); //initialize net (and print most of the blob sizes too)
