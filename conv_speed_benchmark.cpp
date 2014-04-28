@@ -5,6 +5,7 @@
 #include <google/protobuf/text_format.h>
 
 #include <cstring>
+#include <vector>
 #include <ctime>
 #include <cstdio>
 #include <sstream>
@@ -16,6 +17,7 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/io.hpp"
 #include "caffe/solver.hpp"
+#include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
 #include "caffe/util/im2col.hpp"
 #include <sys/time.h>
@@ -55,8 +57,26 @@ int conv_speed_test(int num, int channels_in, int height_in, int width_in,
     blob_bottom_vec_.push_back(blob_bottom_); //ConvolutionLayer likes vectors of blobs.
     blob_top_vec_.push_back(blob_top_);
 
-    LayerParameter layerParams; 
-    layerParams.set_kernelsize(kernelSize);
+//changed code for parameter initialziation for convolution layer
+    LayerParameter layer_param; 
+    ConvolutionParameter* convolution_param = 
+        layer_param.mutable_convolution_param();
+
+    convolution_param->set_kernel_size(kernelSize);
+    convolution_param->set_stride(convStride);
+    convolution_param->set_num_output(num_output);
+    convolution_param->set_group(group);
+    convolution_param->mutable_weight_filler()->set_type("gaussian");
+    convolution_param->mutable_weight_filler()->set_value(1);
+    convolution_param->mutable_bias_filler()->set_type("gaussian");
+    convolution_param->mutable_bias_filler()->set_value(0.1);
+
+    shared_ptr<Layer<Dtype> > layer(
+        new ConvolutionLayer<Dtype>((const LayerParameter) layer_param));
+    layer->SetUp(blob_bottom_vec_, &(blob_top_vec_));
+
+//original code of older version
+/*    layerParams.set_kernelsize(kernelSize);
     layerParams.set_stride(convStride);
     layerParams.set_num_output(num_output);
     layerParams.set_group(group);
@@ -64,7 +84,7 @@ int conv_speed_test(int num, int channels_in, int height_in, int width_in,
     layerParams.mutable_bias_filler()->set_type("gaussian");
 
     ConvolutionLayer<Dtype> convLayer(layerParams);
-    convLayer.SetUp(blob_bottom_vec_, &(blob_top_vec_));
+    convLayer.SetUp(blob_bottom_vec_, &(blob_top_vec_));*/
 
 //TODO: calculate im2col buf size, and print it out.
 
@@ -73,7 +93,7 @@ int conv_speed_test(int num, int channels_in, int height_in, int width_in,
     double start = read_timer();
     for (int j = 0; j < num_runs; ++j)
     {
-        convLayer.Forward(blob_bottom_vec_, &(blob_top_vec_));
+        layer->Forward(blob_bottom_vec_, &(blob_top_vec_));
     }
     CUDA_CHECK(cudaDeviceSynchronize()); //for accurate timing
     double layerTime = (read_timer() - start)/num_runs; 
@@ -93,6 +113,9 @@ template<typename Dtype>
 int im2col_speed_test(int num, int channels_in, int height_in, int width_in,
                     int group, int kernelSize, int convStride, int num_output, string niceName)
 {
+    //added parameter
+    int pad = 0;
+
     int height_out = (height_in - kernelSize)/convStride + 1;
     int width_out = (width_in - kernelSize)/convStride + 1;
 
@@ -119,12 +142,12 @@ int im2col_speed_test(int num, int channels_in, int height_in, int width_in,
         for (int n = 0; n < num; ++n) //each image in the batch
         {
             if(mode == Caffe::GPU){
-                im2col_gpu(bottom_data + blob_bottom_->offset(n), channels_in, height_in,
-                           width_in, kernelSize, convStride, col_data);
+                im2col_gpu( (bottom_data + blob_bottom_->offset(n)), channels_in, height_in,
+                           width_in, kernelSize, pad, convStride, col_data);
             }
             else if(mode == Caffe::CPU){
-                im2col_cpu(bottom_data + blob_bottom_->offset(n), channels_in, height_in,
-                           width_in, kernelSize, convStride, col_data);
+                im2col_cpu((bottom_data + blob_bottom_->offset(n)), channels_in, height_in,
+                           width_in, kernelSize, pad, convStride, col_data);
             }
         }
     }
