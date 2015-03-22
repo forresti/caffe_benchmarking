@@ -22,7 +22,7 @@ double benchmark_allreduce(int weight_count, int nRuns){
     double start = MPI_Wtime(); //in seconds
 
     for(int i=0; i<nRuns; i++){
-        MPI_Allreduce(weight_diff_local, //send
+        MPI_Allreduce(MPI_IN_PLACE, //weight_diff_local, //send
                   weight_diff, //recv
                   weight_count, //count
                   MPI_FLOAT, 
@@ -101,8 +101,8 @@ int main (int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
     //TODO: verify how MPI handles cmdline args (all procs seem to get the input args)
-    //int weight_count = 3*3*384*384; // = 1327104 = 1.3M * 4 = 5.2MB
-    int weight_count = 256*256*3; //for images
+    int weight_count = 3*3*384*384; // = 1327104 = 1.3M * 4 = 5.2MB
+    //int weight_count = 256*256*3; //for images
     if(argc == 2)
         weight_count = atoi(argv[1]);
     double GB_to_transfer = (double) weight_count * sizeof(float) / 1e9;
@@ -111,10 +111,10 @@ int main (int argc, char **argv)
         printf("  weight_count = %d = %f GB\n", weight_count, GB_to_transfer);
 
     int nRuns = 50; //TODO: average time over nRuns.
-    //double elapsedTime = benchmark_allreduce(weight_count, nRuns);
+    double elapsedTime = benchmark_allreduce(weight_count, nRuns);
 
-    int img_per_proc = 25;
-    double elapsedTime = benchmark_scatter(weight_count, img_per_proc, nRuns); 
+    //int img_per_proc = 25;
+    //double elapsedTime = benchmark_scatter(weight_count, img_per_proc, nRuns); 
 
     //verified: all ranks get roughly the same elapsedTime.
     if(rank == 0)

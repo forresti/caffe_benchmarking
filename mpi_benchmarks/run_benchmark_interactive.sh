@@ -15,8 +15,8 @@
 #approx alexnet param sizes:
 for probSize in 34848 614400 884736 1327104 16777216
 do
-    #aprun -n 10 -d 16 ./main $probSize 
-    aprun -n 100 -d 16 ./main $probSize 
+    aprun -n 10 -d 16 ./main $probSize 
+    #aprun -n 100 -d 16 ./main $probSize 
 done
 
 
