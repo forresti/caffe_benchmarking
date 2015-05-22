@@ -5,9 +5,15 @@
 OBJS = main.o  helpers.o
 EXENAME = main
 
-CC = CC
-CCOPTS = -c -O3 -g -I$(MPICH_DIR)/include 
-LINK = CC
+#for Titan:
+#CC = CC
+#CCOPTS = -c -O3 -g -I$(MPICH_DIR)/include
+#LINK = CC
+
+#For Firebox (fbox.mill):
+CC = mpiCC
+CCOPTS = -c -O3 -g 
+LINK = mpiCC
 LINKOPTS =
  
 all : $(EXENAME)
