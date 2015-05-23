@@ -14,8 +14,11 @@
 for probSize in 34848 614400 884736 1327104 16777216
 #for probSize in 34848
 do
+    #a18 / a19 / a20
     #mpirun --hostfile hostfiles/a18_8slot.txt -np 8 ./main $probSize
-    mpirun --hostfile hostfiles/firebox_1slot.txt -np 2 ./main $probSize
+
+    #firebox:
+    /opt/openmpi/bin/mpirun --hostfile hostfiles/f1_f2_1slot.txt -np 2 ./main $probSize
 done
 
 
