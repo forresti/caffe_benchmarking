@@ -1,3 +1,2 @@
 a18 slots=8
 a19 slots=2
-a20 slots=2

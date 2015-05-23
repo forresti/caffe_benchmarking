@@ -7,14 +7,6 @@
 #include "mpi.h"
 using namespace std;
 
-struct eqstr
-{
-  bool operator()(const char* s1, const char* s2) const
-  {
-    return strcmp(s1, s2) == 0;
-  }
-};
-
 //@param hostname = assume 1024 bytes, as in main()
 //@param bufsz = size of hostname buffer
 // thx for MPI_Gather example: mpi-forum.org/docs/mpi-1.1/mpi-11-html/node70.html
@@ -22,7 +14,7 @@ int select_gpu(int rank, int nproc, char* hostname, int bufsz){
     char* hostname_buf = (char*)malloc( nproc * bufsz * sizeof(char)); 
     int gpu_id[nproc];
 
-    map<string, int> host_counts; //TODO: just use normal 'map'? (don't need c++11 then)
+    map<string, int> host_counts; 
 
     MPI_Gather( hostname, //send
                 bufsz,
@@ -81,7 +73,8 @@ int main (int argc, char **argv)
     hostname[bufsz-1] = '\0';
     gethostname(hostname, bufsz);
 
-    int gpu_id = select_gpu(rank, nproc, hostname, bufsz);
+    int gpu_id = 0;
+    gpu_id = select_gpu(rank, nproc, hostname, bufsz);
 
     printf(" rank = %d, hostname = %s, gpu_id = %d \n", rank, hostname, gpu_id);
 
