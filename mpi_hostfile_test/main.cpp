@@ -34,20 +34,9 @@ int select_gpu(int rank, int nproc, char* hostname, int bufsz){
                 MPI_COMM_WORLD);
       
 
-    //sanity check on MPI_Gather:
-#if 0
     if(rank == 0){
+        //THE BRAINS OF THE OPERATION ... assign GPU ID to each rank
         for(int p=0; p<nproc; p++){
-           printf("hostname_buf[%d]=%s \n", p, &hostname_buf[bufsz*p]);
-        }
-    }
-#endif
-     
-    if(rank == 0){
-#if 1
-        for(int p=0; p<nproc; p++){
-            //char h[bufsz];
-            //strncpy(h, &hostname_buf[p*bufsz], bufsz); //h[0:bufsz] = hostname_buf[p][0:bufsz]
             string h( &hostname_buf[p*bufsz] ); //h[0:bufsz] = hostname_buf[p][0:bufsz]
             if( host_counts.find(h) == host_counts.end() ){
                 //haven't seen this hostname before
@@ -58,14 +47,22 @@ int select_gpu(int rank, int nproc, char* hostname, int bufsz){
                 gpu_id[p] = host_counts[h];
                 host_counts[h]++;
             }
-            printf("gpu_id[%d] = %d, h=%s \n", p, gpu_id[p], h.c_str());
+            //printf("gpu_id[%d] = %d, h=%s \n", p, gpu_id[p], h.c_str());
         }
-#endif
     }
- 
+
+    int my_gpu_id;
+    MPI_Scatter(gpu_id, //sendbuf
+                1, //num to send
+                MPI_INT,
+                &my_gpu_id, //recvbuf
+                1, //num to recv
+                MPI_INT,
+                0, //root
+                MPI_COMM_WORLD);
     free(hostname_buf);
 
-    return 0;
+    return my_gpu_id;
 }
 
 
@@ -84,9 +81,9 @@ int main (int argc, char **argv)
     hostname[bufsz-1] = '\0';
     gethostname(hostname, bufsz);
 
-    int gpu = select_gpu(rank, nproc, hostname, bufsz);
+    int gpu_id = select_gpu(rank, nproc, hostname, bufsz);
 
-    printf(" rank = %d, hostname = %s \n", rank, hostname);
+    printf(" rank = %d, hostname = %s, gpu_id = %d \n", rank, hostname, gpu_id);
 
 
     MPI_Finalize();

@@ -1,4 +1,9 @@
 
+GOALS
+- [done] Understand MPI hostfiles
+- [done] Allocate a local GPU ID to each global MPI rank
+
+EXAMPLES
 
 1 process per node:
 mpirun --hostfile hostfiles/a19_a20_1slot.txt -np 2 ./main
