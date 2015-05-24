@@ -1,0 +1,5 @@
+f12 slots=2
+f13 slots=2
+f14 slots=2
+f15 slots=2
+f16 slots=2
