@@ -11,9 +11,11 @@ EXENAME = main
 #LINK = CC
 
 #For Firebox (fbox.mill):
-CC = mpiCC
+CC = /opt/openmpi/bin/mpiCC
+#CC=mpiCC
 CCOPTS = -c -O3 -g 
-LINK = mpiCC
+#LINK=mpiCC
+LINK = /opt/openmpi/bin/mpiCC
 LINKOPTS =
  
 all : $(EXENAME)
