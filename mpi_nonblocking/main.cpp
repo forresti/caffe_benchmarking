@@ -16,6 +16,7 @@ double benchmark_allreduce(int nRuns, int* out_weight_count){
 
     const int num_messages = 5;
     int message_size[num_messages] = {34848, 614400, 884736, 1327104, 884736}; //sorta like alexnet conv weights
+    //int message_size[num_messages] = {4194304, 4194304, 4194304, 4194304, 4194304}; //4mb each
 
     float** weight_diff = (float**)malloc(num_messages * sizeof(float*));
     int weight_count_ = 0;
