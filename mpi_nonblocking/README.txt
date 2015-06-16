@@ -11,11 +11,11 @@ mpirun --hostfile hostfiles/a19_a20_1slot.txt -np 2 ./main
 /opt/openmpi/bin/mpirun --hostfile hostfiles/f1_f2_1slot.txt -np 2 ./main
 
 
-RESULTS on Firebox (15 nodes) so far:
+RESULTS on Firebox-0 (15 nodes) so far:
 - nonblocking: .24 GB/s
 - blocking: .75 GB/s
 
-Testing 16-bit...
+Testing 16-bit on Firebox-0...
 - blocking, change MPI_FLOAT to MPI_SHORT: 1.1 GB/s (w.r.t float) 
 - blocking, change MPI_FLOAT to MPI_INT: .75 GB/s
 - nonblocking, change MPI_FLOAT to MPI_SHORT: .24 GB/s 
