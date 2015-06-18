@@ -32,3 +32,10 @@ Titan Allreduce:
     elapsedTime: 0.177817 sec, GB: 0.083886, allreduce: 0.471755 GB/s
 - nonblocking: (hangs)
 
+
+Titan point-to-point:
+  (only measuring workers->root)
+- [2 nodes] 5.3 GB/s
+- [8 nodes] .72 GB/s
+- [16 nodes] .21 GB/s
+- [32 nodes] .085 GB/s

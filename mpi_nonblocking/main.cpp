@@ -3,21 +3,30 @@
 #include <math.h>
 #include <string.h>
 #include "helpers.h"
+#include <assert.h>
 #include "mpi.h"
 using namespace std;
 
-//#define NONBLOCKING
+enum communication_t {BLOCKING=1, NONBLOCKING=2, POINT2POINT=3}; 
+
+//int comm = BLOCKING;
+int comm = POINT2POINT;
 
 //@return avg time for MPI_Allreduce
 double benchmark_allreduce(int nRuns, int* out_weight_count){
+    int rank, nproc;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
-    //const int num_messages = 1;
-    //int message_size[num_messages] = {1327104};
+  // ** PROBLEM DIMS **
+    const int num_messages = 1;
+    int message_size[num_messages] = {1327104};
 
-    const int num_messages = 5;
-    int message_size[num_messages] = {34848, 614400, 884736, 1327104, 884736}; //sorta like alexnet conv weights
+    //const int num_messages = 5;
+    //int message_size[num_messages] = {34848, 614400, 884736, 1327104, 884736}; //sorta like alexnet conv weights
     //int message_size[num_messages] = {4194304, 4194304, 4194304, 4194304, 4194304}; //4mb each
 
+  // ** INIT DATA **
     float** weight_diff = (float**)malloc(num_messages * sizeof(float*));
     int weight_count_ = 0;
 
@@ -36,36 +45,69 @@ double benchmark_allreduce(int nRuns, int* out_weight_count){
     MPI_Request requests[num_messages];
     MPI_Status statuses[num_messages];
 
+  // ** PERFORM BENCHMARK **
     double start = MPI_Wtime(); //in seconds
 
     for(int i=0; i<nRuns; i++){
-#ifndef NONBLOCKING
-        for(int m=0; m<num_messages; m++){
-            MPI_Allreduce(MPI_IN_PLACE, //weight_diff_local, //send
-                      weight_diff[m], //recv
-                      message_size[m], //count
-                      MPI_FLOAT,
-                      MPI_SUM, //op
-                      MPI_COMM_WORLD);
+        if(comm == BLOCKING){
+            for(int m=0; m<num_messages; m++){
+                MPI_Allreduce(MPI_IN_PLACE, //weight_diff_local, //send
+                          weight_diff[m], //recv
+                          message_size[m], //count
+                          MPI_FLOAT,
+                          MPI_SUM, //op
+                          MPI_COMM_WORLD);
+            }
         }
-#else
-        for(int m=0; m<num_messages; m++){
-            MPI_Iallreduce(MPI_IN_PLACE, //weight_diff_local, //send
-                      weight_diff[m], //recv
-                      message_size[m], //count
-                      MPI_FLOAT,
-                      MPI_SUM, //op
-                      MPI_COMM_WORLD,
-                      &requests[m]);
+        else if(comm == NONBLOCKING){
+            for(int m=0; m<num_messages; m++){
+                MPI_Iallreduce(MPI_IN_PLACE, //weight_diff_local, //send
+                          weight_diff[m], //recv
+                          message_size[m], //count
+                          MPI_FLOAT,
+                          MPI_SUM, //op
+                          MPI_COMM_WORLD,
+                          &requests[m]);
 
-            //int flag;
-            //MPI_Test(&requests[m], &flag, &statuses[m]); //Mark Hoemmen says this may be necessary to start the message (this doesn't seem to increase BW)
+                //int flag;
+                //MPI_Test(&requests[m], &flag, &statuses[m]); //Mark Hoemmen says this may be necessary to start the message (this doesn't seem to increase BW)
+            }
+            //MPI_Waitall(num_messages, requests, statuses);
+            for(int m=0; m<num_messages; m++){
+                MPI_Wait(&requests[m], &statuses[m]);
+            }
         }
-        //MPI_Waitall(num_messages, requests, statuses);
-        for(int m=0; m<num_messages; m++){
-            MPI_Wait(&requests[m], &statuses[m]);
+        else if(comm == POINT2POINT){
+            //send data from each worker to root 
+            //intentionally NOT doing gather/scatter, becuase we're emulating "async param setver"
+            if(rank != 0){
+                assert(num_messages == 1); //haven't set this up for multiple messages yet
+                int m = 0;
+                MPI_Send(weight_diff[m], 
+                         message_size[m],
+                         MPI_FLOAT,
+                         0, //dest = root
+                         0, //tag
+                         MPI_COMM_WORLD);
+            }
+            else //rank == 0
+            {
+                for(int i=1; i<nproc; i++){
+                   int m = 0;
+                    MPI_Recv(weight_diff[m],
+                             message_size[m],
+                             MPI_FLOAT,
+                             MPI_ANY_SOURCE, //source
+                             MPI_ANY_TAG, //tag
+                             MPI_COMM_WORLD,
+                             &statuses[m]); //not really saving status...
+                }
+            }
         }
-#endif
+        else{
+            printf("unknown communication type. aborting.\n");
+            exit(0);
+        }
     }
 
     double end = MPI_Wtime();
