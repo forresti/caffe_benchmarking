@@ -9,8 +9,8 @@ using namespace std;
 
 enum communication_t {BLOCKING=1, NONBLOCKING=2, POINT2POINT=3}; 
 
-//int comm = BLOCKING;
-int comm = POINT2POINT;
+int comm = BLOCKING;
+//int comm = POINT2POINT;
 
 //@return avg time for MPI_Allreduce
 double benchmark_allreduce(int nRuns, int* out_weight_count){
@@ -19,13 +19,19 @@ double benchmark_allreduce(int nRuns, int* out_weight_count){
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
   // ** PROBLEM DIMS **
-    const int num_messages = 1;
-    int message_size[num_messages] = {1327104};
+    //const int num_messages = 1;
+    //int message_size[num_messages] = {1327104};
 
     //const int num_messages = 5;
     //int message_size[num_messages] = {34848, 614400, 884736, 1327104, 884736}; //sorta like alexnet conv weights
     //int message_size[num_messages] = {4194304, 4194304, 4194304, 4194304, 4194304}; //4mb each
 
+    const int num_messages = 14;
+    float message_size_fl[num_messages] = {0.088, 0.02343, 0.0351, 0.0234, 0.585, 0.0469, 0.0625, 0.0469, 0.281, 0.125, 0.125, 0.563, 0.281, 1.46}; //for my 4MB NiN tripleCCCP ... in MB
+    int message_size[num_messages];
+    for(int m=0; m<num_messages; m++){
+        message_size[m] = (int) 1024*1024*message_size_fl[m];
+    }
   // ** INIT DATA **
     float** weight_diff = (float**)malloc(num_messages * sizeof(float*));
     int weight_count_ = 0;

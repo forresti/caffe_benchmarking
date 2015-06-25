@@ -32,6 +32,10 @@ Titan Allreduce:
     elapsedTime: 0.177817 sec, GB: 0.083886, allreduce: 0.471755 GB/s
 - nonblocking: (hangs)
 
+  w/ 14 tiny messages (my 4MB NiN)
+- [16 nodes] .69 GB/s
+- [32 nodes] .58 GB/s
+   -> no need to batch the messages, at least for now.
 
 Titan point-to-point:
   (only measuring workers->root)
