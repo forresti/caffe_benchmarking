@@ -6,6 +6,12 @@
 #include "mpi.h"
 using namespace std;
 
+void fill_with_noise(float* buf, int len){
+    for(int i=0; i<len; i++){
+        buf[i] = (float)rand() / (float)RAND_MAX;
+    }
+}
+
 //@return avg time for MPI_Allreduce
 double benchmark_allreduce(int weight_count, int nRuns){
 
@@ -13,11 +19,16 @@ double benchmark_allreduce(int weight_count, int nRuns){
     float* weight_diff_local = (float*)malloc(weight_count * sizeof(float)); //sum of local weight diffs
     float* weight_diff = (float*)malloc(weight_count * sizeof(float)); //sum all weight diffs here
 
+#if 0
     //init to random noise
     for(int i=0; i<weight_count; i++){
         weight_diff_local[i] = (float)rand() / (float)RAND_MAX;
         weight_diff[i] = (float)rand() / (float)RAND_MAX;
     }
+#endif
+
+    fill_with_noise(weight_diff_local, weight_count);
+    fill_with_noise(weight_diff, weight_count);
 
     double start = MPI_Wtime(); //in seconds
 
@@ -39,8 +50,57 @@ double benchmark_allreduce(int weight_count, int nRuns){
     return elapsedTime;
 }
 
+//alternative to allreduce.
+// TODO: gather AND scatter.
+double benchmark_scatter_weights(int weight_count, int nRuns){
+
+    int rank, nproc;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    float* weight_diff = NULL; 
+    float* weight_diff_local = (float*)malloc(weight_count * sizeof(float));
+    weight_diff_local = (float*)malloc(weight_count * sizeof(float));
+
+    if(rank == 0){
+        weight_diff = (float*)malloc(weight_count * nproc * sizeof(float));
+        fill_with_noise(weight_diff, weight_count * nproc);
+    }
+
+    double start = MPI_Wtime(); //in seconds
+
+    for(int i=0; i<nRuns; i++){
+        //TODO: MPI_Gather
+
+#if 1 
+        //thx: http://stackoverflow.com/questions/13867809/how-are-mpi-scatter-and-mpi-gather-used-from-c
+        MPI_Scatter(weight_diff, //send_data
+                    weight_count, //send_count (per process)
+                    //1, //tmp send_count
+                    MPI_FLOAT, //send_datatype
+                    weight_diff_local, //recv_data 
+                    weight_count, //recv_count (same as send_count?) 
+                    MPI_FLOAT, //recv_datatype
+                    0, //root
+                    MPI_COMM_WORLD);
+#endif
+    }
+    double end = MPI_Wtime();
+    double elapsedTime = end - start; 
+    elapsedTime = elapsedTime / nRuns;
+
+    if(rank == 0)
+        free(weight_diff);
+
+    free(weight_diff_local);
+
+    return elapsedTime;
+}
+
+
 //@param img_count = height*width*depth per image
-double benchmark_scatter(int img_count, int img_per_proc, int nRuns){
+// mocking up "have one machine in charge of loading images; distributing them to workers"
+double benchmark_scatter_images(int img_count, int img_per_proc, int nRuns){
 
     int rank, nproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -51,13 +111,7 @@ double benchmark_scatter(int img_count, int img_per_proc, int nRuns){
 
     if(rank == 0){
         img_fullbatch = (float*)malloc(img_count * img_per_proc * nproc * sizeof(float));
-
-        //init to random noise
-        for(int i=0; i < (img_count * img_per_proc * nproc); i++)
-        //for(int i=0; i < (img_count * img_per_proc); i++)
-        {
-            img_fullbatch[i] = (float)rand() / (float)RAND_MAX;
-        }
+        fill_with_noise(img_fullbatch, (img_count * img_per_proc * nproc));
     }
 
     double start = MPI_Wtime(); //in seconds
@@ -67,11 +121,9 @@ double benchmark_scatter(int img_count, int img_per_proc, int nRuns){
         //thx: http://stackoverflow.com/questions/13867809/how-are-mpi-scatter-and-mpi-gather-used-from-c
         MPI_Scatter(img_fullbatch, //send_data
                     img_count * img_per_proc, //send_count (per process)
-                    //1, //tmp send_count
                     MPI_FLOAT, //send_datatype
                     img_localbatch, //recv_data 
                     img_count * img_per_proc, //recv_count (same as send_count?) 
-                    //1, //tmp recv_count
                     MPI_FLOAT, //recv_datatype
                     0, //root
                     MPI_COMM_WORLD);
@@ -113,8 +165,10 @@ int main (int argc, char **argv)
     int nRuns = 50; //TODO: average time over nRuns.
     double elapsedTime = benchmark_allreduce(weight_count, nRuns);
 
+    //double elapsedTime = benchmark_scatter_weights(weight_count, nRuns);
+
     //int img_per_proc = 25;
-    //double elapsedTime = benchmark_scatter(weight_count, img_per_proc, nRuns); 
+    //double elapsedTime = benchmark_scatter_images(weight_count, img_per_proc, nRuns); 
 
     //verified: all ranks get roughly the same elapsedTime.
     if(rank == 0)
