@@ -50,6 +50,67 @@ double benchmark_allreduce(int weight_count, int nRuns){
     return elapsedTime;
 }
 
+void fill_array_deterministic(float* buf, int len){
+    int rank, nproc;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    for(int i=0; i<len; i++){
+        buf[i] = i%100 + rank; //arbitrary and reproducable... and different per rank.
+    }
+}
+
+void check_array_deterministic(float* buf, int len){
+    int rank, nproc;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    int sum_ranks = 0;
+    for(int i=0; i<nproc; i++){
+      sum_ranks += i;
+    }
+
+    for(int i=0; i<len; i++){
+        float ground_truth = nproc*(i%100) + sum_ranks;
+        if(ground_truth != buf[i]){
+            printf(" rank=%d, buf[%d]=%f, GT=%f\n", rank, i, buf[i], ground_truth); 
+        } 
+    }
+}
+
+double benchmark_allreduce_with_correctness_check(int weight_count, int nRuns){
+
+    //verified that the time spent in Malloc is trivial compared to Allreduce.
+    float* weight_diff = (float*)malloc(weight_count * sizeof(float)); //sum all weight diffs here
+
+    //fill_with_noise(weight_diff, weight_count);
+
+
+    double elapsedTime = 0;
+    for(int i=0; i<nRuns; i++){
+
+        fill_array_deterministic(weight_diff, weight_count);
+
+        double start = MPI_Wtime(); //in seconds
+
+        MPI_Allreduce(MPI_IN_PLACE, //weight_diff_local, //send
+                  weight_diff, //recv
+                  weight_count, //count
+                  MPI_FLOAT, 
+                  MPI_SUM, //op
+                  MPI_COMM_WORLD);
+      
+        elapsedTime += ( MPI_Wtime() - start );
+        check_array_deterministic(weight_diff, weight_count); 
+    }
+    elapsedTime = elapsedTime / nRuns;
+
+    free(weight_diff);
+    return elapsedTime;
+}
+
+
+
 //alternative to allreduce.
 // TODO: gather AND scatter.
 double benchmark_scatter_weights(int weight_count, int nRuns){
@@ -163,8 +224,8 @@ int main (int argc, char **argv)
         printf("  weight_count = %d = %f GB\n", weight_count, GB_to_transfer);
 
     int nRuns = 50; //TODO: average time over nRuns.
-    double elapsedTime = benchmark_allreduce(weight_count, nRuns);
-
+    //double elapsedTime = benchmark_allreduce(weight_count, nRuns);
+    double elapsedTime = benchmark_allreduce_with_correctness_check(weight_count, nRuns);
     //double elapsedTime = benchmark_scatter_weights(weight_count, nRuns);
 
     //int img_per_proc = 25;
