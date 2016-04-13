@@ -1,6 +1,6 @@
 
 #qsub -I -q batch -l nodes=10 -l walltime=1:00:00 -A CSC103   
-#aprun -n 10 -d 16 ./main 
+#aprun -n 10 -d 16 ./allreduce_benchmark 
 
 #    7*7*64*3 = 9408 
 #    11*11*96*3 = 34848
@@ -15,8 +15,8 @@
 #approx alexnet param sizes:
 for probSize in 34848 614400 884736 1327104 16777216
 do
-    aprun -n 10 -d 16 ./main $probSize 
-    #aprun -n 100 -d 16 ./main $probSize 
+    aprun -n 10 -d 16 ./allreduce_benchmark $probSize 
+    #aprun -n 100 -d 16 ./allreduce_benchmark $probSize 
 done
 
 

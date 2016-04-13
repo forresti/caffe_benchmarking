@@ -1,6 +1,6 @@
 
 probSize=7000000 #28MB / 4 -> in bytes. NiN param file size
-nRuns=3 #there's also an nRuns inside of the 'main' file... this is just for "meta-variance" analysis
+nRuns=3 #there's also an nRuns inside of the 'allreduce_benchmark' file... this is just for "meta-variance" analysis
 outDir=results_allreduce
 #outDir=results_scatter_eth
 
@@ -25,13 +25,13 @@ do
     for((i=0; i<$nRuns; i++))
     do
         #defaults to Infiniband:
-        #/opt/openmpi/bin/mpirun --hostfile $hostfile -np $nProcs ./main $probSize >> $outF
+        #/opt/openmpi/bin/mpirun --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF
 
         #56 GB/s infiniband
-        /opt/openmpi/bin/mpirun --mca btl_tcp_if_include ib0 --mca btl tcp --hostfile $hostfile -np $nProcs ./main $probSize >> $outF 
+        /opt/openmpi/bin/mpirun --mca btl_tcp_if_include ib0 --mca btl tcp --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF 
 
         #40GB/s ethernet (eth2):
-        #/opt/openmpi/bin/mpirun --mca btl_tcp_if_include eth2 --mca btl tcp --hostfile $hostfile -np $nProcs ./main $probSize >> $outF
+        #/opt/openmpi/bin/mpirun --mca btl_tcp_if_include eth2 --mca btl tcp --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF
 
     done
 done

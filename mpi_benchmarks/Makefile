@@ -2,8 +2,8 @@
 #Created: 1/24/10
 #Modified: 9/6/12
 
-OBJS = main.o  helpers.o
-EXENAME = main
+OBJS = allreduce_benchmark.o  helpers.o
+EXENAME = allreduce_benchmark
 
 #for Titan:
 #CC = CC
@@ -23,8 +23,8 @@ all : $(EXENAME)
 $(EXENAME) : $(OBJS)
 	$(LINK) -o $(EXENAME) $(OBJS) $(LINKOPTS)
 
-main.o : main.cpp helpers.h
-	$(CC) $(CCOPTS) main.cpp
+allreduce_benchmark.o : allreduce_benchmark.cpp helpers.h
+	$(CC) $(CCOPTS) allreduce_benchmark.cpp
 
 helpers.o : helpers.cpp helpers.h
 	$(CC) $(CCOPTS) helpers.cpp
