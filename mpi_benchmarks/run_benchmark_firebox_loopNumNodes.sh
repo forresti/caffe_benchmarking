@@ -28,10 +28,14 @@ do
         #/opt/openmpi/bin/mpirun --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF
 
         #56 GB/s infiniband
-        /opt/openmpi/bin/mpirun --mca btl_tcp_if_include ib0 --mca btl tcp --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF 
+        #/opt/openmpi/bin/mpirun --mca btl_tcp_if_include ib0 --mca btl tcp --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF 
 
         #40GB/s ethernet (eth2):
         #/opt/openmpi/bin/mpirun --mca btl_tcp_if_include eth2 --mca btl tcp --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF
+
+
+        #Kostadin's version 12/14/15 (can also use `pml ob1`)
+        /opt/openmpi/bin/mpirun --mca btl_openib_if_include mlx4_1:1 --mca btl self,openib --mca pml ob1 --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF
 
     done
 done

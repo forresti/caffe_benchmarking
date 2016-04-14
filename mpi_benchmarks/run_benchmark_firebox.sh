@@ -20,8 +20,12 @@ do
     #hostfile=../mpi_hostfile_test/hostfiles/a18_8slot.txt
     #hostfile=../mpi_hostfile_test/hostfiles/f12_to_f16_1slot.txt
     hostfile=../mpi_hostfile_test/hostfiles/firebox_1slot.txt
+
     #firebox:
-    /opt/openmpi/bin/mpirun --hostfile $hostfile -np 8 ./allreduce_benchmark $probSize
+    #/opt/openmpi/bin/mpirun --hostfile $hostfile -np 8 ./allreduce_benchmark $probSize
+
+    /opt/openmpi/bin/mpirun --mca btl_openib_if_include mlx4_1:1 --mca btl self,openib --mca pml cm --mca mtl mxm --hostfile $hostfile -np 2  ./allreduce_benchmark $probSize
+
 done
 
 
