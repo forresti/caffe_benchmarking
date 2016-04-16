@@ -1,6 +1,6 @@
 
 probSize=7000000 #28MB / 4 -> in bytes. NiN param file size
-nRuns=3 #there's also an nRuns inside of the 'allreduce_benchmark' file... this is just for "meta-variance" analysis
+nRuns=1 #there's also an nRuns inside of the 'allreduce_benchmark' file... this is just for "meta-variance" analysis
 outDir=results_allreduce
 #outDir=results_scatter_eth
 
@@ -21,6 +21,8 @@ do
     hostfile=hostfiles/firebox_1slot.txt
     #hostfile=hostfiles/firebox_1slot_eth.txt #1GB/s eth0 (MPI stuff hangs when using this)
 
+    echo "nProcs: " $nProcs
+
     #firebox:
     for((i=0; i<$nRuns; i++))
     do
@@ -34,8 +36,8 @@ do
         #/opt/openmpi/bin/mpirun --mca btl_tcp_if_include eth2 --mca btl tcp --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF
 
 
-        #Kostadin's version 12/14/15 (can also use `pml ob1`)
-        /opt/openmpi/bin/mpirun --mca btl_openib_if_include mlx4_1:1 --mca btl self,openib --mca pml ob1 --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize >> $outF
+        #Kostadin's version 12/14/15 (can also use `pml cm`, but it is slow or hangs for messages > 1MB)
+        /opt/openmpi/bin/mpirun --mca btl_openib_if_include mlx4_1:1 --mca btl self,openib --mca pml ob1 --hostfile $hostfile -np $nProcs ./allreduce_benchmark $probSize #>> $outF
 
     done
 done
